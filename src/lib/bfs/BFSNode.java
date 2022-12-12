@@ -1,4 +1,4 @@
-package lib;
+package lib.bfs;
 
 import java.util.List;
 

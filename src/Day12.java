@@ -1,6 +1,6 @@
-import lib.BFS;
-import lib.BFSNode;
 import lib.CharMatrix;
+import lib.bfs.BFS;
+import lib.bfs.BFSNode;
 
 import java.io.File;
 import java.io.IOException;
