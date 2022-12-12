@@ -1,6 +1,9 @@
 package lib;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -38,6 +41,14 @@ public class CharMatrix {
         this(content.split("\n"));
     }
 
+    public CharMatrix(List<String> content) {
+        this(content.toArray(new String[0]), ' ');
+    }
+
+    public CharMatrix(List<String> content, char fill) {
+        this(content.toArray(new String[0]), fill);
+    }
+
     public int getWidth()
     {
         return content[0].length;
@@ -48,6 +59,11 @@ public class CharMatrix {
         return content.length;
     }
 
+    public boolean isValid(int x,int y)
+    {
+        return (x >= 0 && y >= 0 && x < getWidth() && y < getHeight());
+    }
+
     public char get(int x,int y)
     {
         return content[y][x];
@@ -55,7 +71,7 @@ public class CharMatrix {
 
     public char getUnbounded(int x,int y)
     {
-        if (x < 0 || y < 0 || x >= getWidth() || y >= getHeight()) {
+        if (!isValid(x, y)) {
             return fill;
         } else {
             return content[y][x];
@@ -127,5 +143,79 @@ public class CharMatrix {
         return IntStream.range(0, content.length)
                 .mapToObj(this::getRow)
                 .collect(Collectors.joining("\n"));
+    }
+
+    public class Position
+    {
+        final int x;
+        final int y;
+
+        public Position(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        public boolean isValid() {
+            return CharMatrix.this.isValid(x, y);
+        }
+
+        public int getX() {
+            return x;
+        }
+
+        public int getY() {
+            return y;
+        }
+
+        public char get() {
+            return CharMatrix.this.get(x, y);
+        }
+
+        public char getUnbounded() {
+            return CharMatrix.this.getUnbounded(x, y);
+        }
+
+        public char getWrap() {
+            return CharMatrix.this.getWrap(x, y);
+        }
+
+        public void set(char c) {
+            CharMatrix.this.set(x, y, c);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Position position = (Position) o;
+            return x == position.x && y == position.y;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(x, y);
+        }
+
+        public Position add(Position delta)
+        {
+            return new Position(x + delta.x, y + delta.y);
+        }
+
+        public List<Position> getNeighbours()
+        {
+            List<Position> result = new ArrayList<>();
+            for (CharMatrix.Position delta : new CharMatrix.Position[] {
+                    new Position(-1, 0),
+                    new Position(1, 0),
+                    new Position(0, -1),
+                    new Position(0, 1),
+            }) {
+                Position next = this.add(delta);
+                if (next.isValid()) {
+                    result.add(next);
+                }
+            }
+            return result;
+        }
     }
 }
