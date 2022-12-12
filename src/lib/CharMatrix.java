@@ -1,9 +1,6 @@
 package lib;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -137,6 +134,18 @@ public class CharMatrix {
         return new CharMatrix(newContent, fill);
     }
 
+    public Optional<Position> find(char c)
+    {
+        for (int y = 0; y < getHeight(); y++) {
+            for (int x = 0; x < getWidth(); x++) {
+                if (content[y][x] == c) {
+                    return Optional.of(new Position(x, y));
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
     @Override
     public String toString()
     {
@@ -216,6 +225,11 @@ public class CharMatrix {
                 }
             }
             return result;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("(%d,%d)", x, y);
         }
     }
 }

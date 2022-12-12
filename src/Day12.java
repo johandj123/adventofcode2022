@@ -92,18 +92,10 @@ public class Day12 {
     private void readInput() throws IOException {
         List<String> lines = Files.readAllLines(new File("input12.txt").toPath());
         m = new CharMatrix(lines);
-        for (int y = 0; y < m.getHeight(); y++) {
-            for (int x = 0; x < m.getWidth(); x++) {
-                char c = m.get(x, y);
-                if (c == 'S') {
-                    start = m.new Position(x, y);
-                    m.set(x, y, 'a');
-                } else if (c == 'E') {
-                    end = m.new Position(x, y);
-                    m.set(x,  y, 'z');
-                }
-            }
-        }
+        start = m.find('S').get();
+        start.set('a');
+        end = m.find('E').get();
+        end.set('z');
     }
 
 }
