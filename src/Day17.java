@@ -1,10 +1,7 @@
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class Day17 {
     String moves;
@@ -20,19 +17,38 @@ public class Day17 {
         init();
         drop(2022);
         long start = new Date().getTime();
-        drop(100000000);
+        drop(1000000000000L);
         System.out.println("ms: " + (new Date().getTime() - start));
     }
 
-    private void drop(int count) {
+    private void drop(long count) {
         moveCount = 0;
         shapeCount = 0;
         Field field = new Field();
-        for (int i = 0; i < count; i++) {
+        Map<State, HeightAndRound> states = new HashMap<>();
+        boolean enableCycles = true;
+        for (long i = 0; i < count; i++) {
+            long h = field.towerHeight();
+            if (enableCycles) {
+                State state = new State(moveCount, shapeCount, field);
+                if (!states.containsKey(state)) {
+                    states.put(state, new HeightAndRound(h, i));
+                } else {
+                    HeightAndRound har = states.get(state);
+                    long hdelta = h - har.h;
+                    long idelta = i - har.i;
+                    while (i + idelta < count) {
+                        field.applyCycle(hdelta);
+                        i += idelta;
+                    }
+                    i--;
+                    enableCycles = false;
+                    continue;
+                }
+            }
             Shape shape = nextShape();
-            long ymax = field.towerHeight();
             int dx = 2;
-            long dy = ymax + 3;
+            long dy = h + 3;
             while (true) {
                 int movex = nextMove();
                 if (dx + movex >= 0 && dx + movex < shape.xlimit && field.noCommon(shape.positions, dx + movex, dy)) {
@@ -126,8 +142,49 @@ public class Day17 {
         }
     }
 
+    static class State {
+        final int moveCount;
+        final int shapeCount;
+        final boolean[][] array = new boolean[10][7];
+
+        public State(int moveCount, int shapeCount, Field field) {
+            this.moveCount = moveCount;
+            this.shapeCount = shapeCount;
+            for (int y = 0; y < 10; y++) {
+                for (int x = 0; x < 7; x++) {
+                    array[y][x] = field.contains(x, y + field.rollArray.ystart + RollArray.HPART - 10);
+                }
+            }
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            State state = (State) o;
+            return moveCount == state.moveCount && shapeCount == state.shapeCount && Arrays.deepEquals(array, state.array);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Objects.hash(moveCount, shapeCount);
+            result = 31 * result + Arrays.deepHashCode(array);
+            return result;
+        }
+    }
+
+    static class HeightAndRound {
+        final long h;
+        final long i;
+
+        public HeightAndRound(long h, long i) {
+            this.h = h;
+            this.i = i;
+        }
+    }
+
     static class RollArray {
-        static final int HPART = 100;
+        static final int HPART = 42;
         int start = 0;
         long ystart = 0;
         boolean[][] array = new boolean[HPART][7];
@@ -190,6 +247,11 @@ public class Day17 {
 
         public long towerHeight() {
             return h;
+        }
+
+        public void applyCycle(long hdelta) {
+            h += hdelta;
+            rollArray.ystart += hdelta;
         }
     }
 
