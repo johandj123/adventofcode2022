@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 public class Day17 {
     String moves;
     int moveCount;
-    List<Set<Position>> shapes = new ArrayList<>();
+    List<List<Position>> shapes = new ArrayList<>();
     int shapeCount;
 
     public static void main(String[] args) throws IOException {
@@ -16,23 +16,26 @@ public class Day17 {
 
     private void start() throws IOException {
         init();
-        first();
+        drop(2022);
+        drop(1000000);
     }
 
-    private void first() {
-        Set<Position> field = new HashSet<>();
-        for (int i = 0; i < 2022; i++) {
-            Set<Position> current = nextShape();
-            int ymax = towerHeight(field);
+    private void drop(int count) {
+        moveCount = 0;
+        shapeCount = 0;
+        Field field = new Field();
+        for (int i = 0; i < count; i++) {
+            List<Position> current = nextShape();
+            int ymax = field.towerHeight();
             current = move(current, 2, ymax + 3);
             while (true) {
                 int dx = nextMove();
-                Set<Position> afterMove = move(current, dx, 0);
-                if (inBounds(afterMove) && noCommon(afterMove, field)) {
+                List<Position> afterMove = move(current, dx, 0);
+                if (inBounds(afterMove) && field.noCommon(afterMove)) {
                     current = afterMove;
                 }
-                Set<Position> afterFall = move(current, 0, -1);
-                if (inBounds(afterFall) && noCommon(afterFall, field)) {
+                List<Position> afterFall = move(current, 0, -1);
+                if (inBounds(afterFall) && field.noCommon(afterFall)) {
                     current = afterFall;
                 } else {
                     break;
@@ -41,16 +44,16 @@ public class Day17 {
 //            printField(field, current);
             field.addAll(current);
         }
-        System.out.println(towerHeight(field));
+        System.out.println(field.towerHeight());
     }
 
-    private void printField(Set<Position> field, Set<Position> current) {
-        int h = Math.max(towerHeight(field), towerHeight(current));
-        for (int y = h - 1; y >= 0;  y--) {
+    private void printField(Field field, List<Position> current) {
+        int h = field.towerHeight() + 4;
+        for (int y = h; y >= 0;  y--) {
             System.out.print('|');
             for (int x = 0; x < 7; x++) {
                 Position position = new Position(x, y);
-                System.out.print(field.contains(position) ? '#' :
+                System.out.print(field.field.contains(position) ? '#' :
                         (current.contains(position) ? '@' : '.'));
             }
             System.out.println('|');
@@ -58,39 +61,35 @@ public class Day17 {
         System.out.println("+-------+");
     }
 
-    private int towerHeight(Set<Position> field) {
-        return field.stream().mapToInt(p -> p.y + 1).max().orElse(0);
-    }
-
     private void init() throws IOException {
         moves = Files.readString(new File("input17.txt").toPath()).trim();
-        shapes.add(Set.of(
+        shapes.add(List.of(
                 new Position(0, 0),
                 new Position(1, 0),
                 new Position(2, 0),
                 new Position(3, 0)
         ));
-        shapes.add(Set.of(
+        shapes.add(List.of(
                 new Position(1, 0),
                 new Position(0, 1),
                 new Position(1, 1),
                 new Position(2, 1),
                 new Position(1, 2)
         ));
-        shapes.add(Set.of(
+        shapes.add(List.of(
                 new Position(2, 2),
                 new Position(2, 1),
                 new Position(0, 0),
                 new Position(1, 0),
                 new Position(2, 0)
         ));
-        shapes.add(Set.of(
+        shapes.add(List.of(
                 new Position(0, 0),
                 new Position(0, 1),
                 new Position(0, 2),
                 new Position(0, 3)
         ));
-        shapes.add(Set.of(
+        shapes.add(List.of(
                 new Position(0, 0),
                 new Position(0, 1),
                 new Position(1, 0),
@@ -106,21 +105,12 @@ public class Day17 {
         return c == '<' ? -1 : 1;
     }
 
-    private Set<Position> nextShape() {
-        Set<Position> result = shapes.get(shapeCount++);
+    private List<Position> nextShape() {
+        List<Position> result = shapes.get(shapeCount++);
         if (shapeCount == shapes.size()) {
             shapeCount = 0;
         }
         return result;
-    }
-
-    private boolean noCommon(Set<Position> a, Set<Position> b) {
-        for (Position position : a) {
-            if (b.contains(position)) {
-                return false;
-            }
-        }
-        return true;
     }
 
     static class Position {
@@ -150,14 +140,44 @@ public class Day17 {
         }
     }
 
-    private boolean inBounds(Set<Position> positions) {
+    private boolean inBounds(List<Position> positions) {
         return positions.stream()
                 .allMatch(position -> position.x >= 0 && position.x < 7 && position.y >= 0);
     }
 
-    private Set<Position> move(Set<Position> positions, int dx, int dy) {
+    private List<Position> move(List<Position> positions, int dx, int dy) {
         return positions.stream()
                 .map(position -> position.add(dx, dy))
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
+    }
+
+    static class Field
+    {
+        int h = 0;
+        Set<Position> field = new HashSet<>();
+
+        public void addAll(List<Position> positions)
+        {
+            for (Position position : positions) {
+                h = Math.max(h, position.y + 1);
+                field.add(position);
+            }
+            field = field.stream()
+                    .filter(p -> p.y >= h - 50)
+                    .collect(Collectors.toSet());
+        }
+
+        public boolean noCommon(List<Position> a) {
+            for (Position position : a) {
+                if (field.contains(position)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public int towerHeight() {
+            return h;
+        }
     }
 }
