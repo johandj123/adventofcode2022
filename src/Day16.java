@@ -64,6 +64,7 @@ public class Day16 {
                         otherNode.pressure > node.pressure &&
                         otherNode.totalFlow > node.totalFlow) {
                     betterFound = true;
+                    break;
                 }
             }
             if (!betterFound) {
@@ -116,6 +117,7 @@ public class Day16 {
                         otherNode.pressure > node.pressure &&
                         otherNode.totalFlow > node.totalFlow) {
                     betterFound = true;
+                    break;
                 }
             }
             if (!betterFound) {
@@ -147,7 +149,7 @@ public class Day16 {
                 Valve nextValve = valves.get(next);
                 result.add(new Node(nextValve, open, nextPressure));
             }
-            if (!open.contains(pos)) {
+            if (!open.contains(pos) && pos.flow > 0) {
                 Set<Valve> nextOpen = new HashSet<>(open);
                 nextOpen.add(pos);
                 result.add(new Node(pos, nextOpen, nextPressure));
@@ -228,7 +230,7 @@ public class Day16 {
             for (String next : apos.next) {
                 result.add(valves.get(next));
             }
-            if (!open.contains(apos)) {
+            if (!open.contains(apos) && apos.flow > 0) {
                 result.add(null);
             }
             return result;
