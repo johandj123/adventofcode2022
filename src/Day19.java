@@ -15,14 +15,30 @@ public class Day19 {
         blueprintList = Files.readAllLines(new File("input19.txt").toPath()).stream()
                 .map(Blueprint::new)
                 .collect(Collectors.toList());
+        first();
+        second();
+    }
+
+    private void first() {
         long first = 0;
         for (int i = 0; i < blueprintList.size(); i++) {
             Blueprint blueprint = blueprintList.get(i);
-            long quality = blueprint.first();
+            long quality = blueprint.maxGeodes(24);
             System.out.println(i + ": " + quality);
             first += ((i + 1) * quality);
         }
         System.out.println("First: " + first);
+    }
+
+    private void second() {
+        long second = 1;
+        for (int i = 0; i < 3; i++) {
+            Blueprint blueprint = blueprintList.get(i);
+            long quality = blueprint.maxGeodes(32);
+            System.out.println(i + ": " + quality);
+            second *= quality;
+        }
+        System.out.println("Second: " + second);
     }
 
     static class Blueprint {
@@ -44,81 +60,33 @@ public class Day19 {
             System.out.println();
         }
 
-        public int first() {
+        public int maxGeodes(int rounds) {
             Set<State> current = new HashSet<>();
             current.add(new State());
-            for (int i = 0; i < 24; i++) {
+            for (int i = 0; i < rounds - 1; i++) {
                 Set<State> next = new HashSet<>();
                 for (State state : current) {
                     next.addAll(state.getNextStates());
                 }
                 current = next;
-                if (i != 23) {
-//                    current = prune(current);
-                    current = pruneOnRobots(current);
-                    current = pruneOnCollected(current);
+                if (i >= 28 && i < rounds - 2) {
+                    current = pruneWorstHalf(current);
                 }
                 System.out.println(i + " -> " + current.size());
             }
-            return current.stream().mapToInt(state -> state.collected.get("geode")).max().orElse(0);
+            int maxGeode = 0;
+            for (State currentState : current) {
+                List<State> next = currentState.getNextStates();
+                int max = next.stream().mapToInt(State::getGeodeCount).max().orElse(0);
+                maxGeode = Math.max(maxGeode, max);
+            }
+            return maxGeode;
         }
 
-        private Set<State> prune(Set<State> states) {
-            Set<State> result = new HashSet<>();
-            for (State state : states) {
-                boolean betterState = states.stream()
-                        .anyMatch(otherState -> state != otherState &&
-                                state.collected.less(otherState.collected) &&
-                                state.robots.less(otherState.robots));
-                if (!betterState) {
-                    result.add(state);
-                }
-            }
-            return result;
-        }
-
-        private Set<State> pruneOnRobots(Set<State> next) {
-            Set<State> result = new HashSet<>();
-            Map<Amount, List<State>> map = next.stream().
-                    collect(Collectors.groupingBy(state -> state.robots));
-            for (var entry : map.entrySet()) {
-                result.addAll(pruneOnRobots(entry.getValue()));
-            }
-            return result;
-        }
-
-        private List<State> pruneOnRobots(List<State> states) {
-            List<State> result = new ArrayList<>();
-            for (State state : states) {
-                boolean betterState = states.stream()
-                        .anyMatch(otherState -> otherState != state && state.collected.less(otherState.collected));
-                if (!betterState) {
-                    result.add(state);
-                }
-            }
-            return result;
-        }
-
-        private Set<State> pruneOnCollected(Set<State> next) {
-            Set<State> result = new HashSet<>();
-            Map<Amount, List<State>> map = next.stream().
-                    collect(Collectors.groupingBy(state -> state.collected));
-            for (var entry : map.entrySet()) {
-                result.addAll(pruneOnCollected(entry.getValue()));
-            }
-            return result;
-        }
-
-        private List<State> pruneOnCollected(List<State> states) {
-            List<State> result = new ArrayList<>();
-            for (State state : states) {
-                boolean betterState = states.stream()
-                        .anyMatch(otherState -> otherState != state && state.robots.less(otherState.robots));
-                if (!betterState) {
-                    result.add(state);
-                }
-            }
-            return result;
+        private Set<State> pruneWorstHalf(Set<State> current) {
+            List<State> result = new ArrayList<>(current);
+            result.sort(Comparator.comparing(State::getGeodeCount).reversed());
+            return new HashSet<>(result.subList(0, result.size() / 2));
         }
 
         class State {
@@ -158,8 +126,10 @@ public class Day19 {
                     }
                 }
 
-                Amount nextCollected = collectResources(collected);
-                result.add(new State(nextCollected, robots, canPayMask));
+                if (canPayMask != 0xf) {
+                    Amount nextCollected = collectResources(collected);
+                    result.add(new State(nextCollected, robots, canPayMask));
+                }
 
                 return result;
             }
@@ -168,6 +138,11 @@ public class Day19 {
                 Amount result = new Amount(collected1);
                 result.add(robots);
                 return result;
+            }
+
+            public int getGeodeCount()
+            {
+                return collected.get("geode");
             }
 
             @Override
