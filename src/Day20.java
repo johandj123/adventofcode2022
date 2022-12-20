@@ -18,13 +18,14 @@ public class Day20 {
                 .map(Integer::parseInt)
                 .collect(Collectors.toList());
         first();
+        second();
     }
 
     private void first() {
         LinkedList<Container> containers = input.stream()
                 .map(Container::new)
                 .collect(Collectors.toCollection(LinkedList::new));
-        mix(containers);
+        mix(containers, 1);
         int index = containers.indexOf(containers.stream().filter(c -> c.value == 0).findFirst().orElseThrow());
         long v1 = containers.get((index + 1000) % containers.size()).value;
         long v2 = containers.get((index + 2000) % containers.size()).value;
@@ -32,29 +33,40 @@ public class Day20 {
         System.out.println(v1 + v2 + v3);
     }
 
-    private void mix(LinkedList<Container> containers) {
+    private void second() {
+        LinkedList<Container> containers = input.stream()
+                .map(value -> new Container(value * 811589153L))
+                .collect(Collectors.toCollection(LinkedList::new));
+        mix(containers, 10);
+        int index = containers.indexOf(containers.stream().filter(c -> c.value == 0).findFirst().orElseThrow());
+        long v1 = containers.get((index + 1000) % containers.size()).value;
+        long v2 = containers.get((index + 2000) % containers.size()).value;
+        long v3 = containers.get((index + 3000) % containers.size()).value;
+        System.out.println(v1 + v2 + v3);
+    }
+
+    private void mix(LinkedList<Container> containers, int count) {
         List<Container> orginialOrder = new ArrayList<>(containers);
-        for (Container current : orginialOrder) {
-//            System.out.println(current);
-            mix(containers, current);
-//            System.out.println(containers);
+        for (int i = 0; i < count; i++) {
+            for (Container current : orginialOrder) {
+                mix(containers, current);
+            }
         }
     }
 
     private void mix(LinkedList<Container> containers, Container current) {
         if (current.value == 0) return;
         int index = containers.indexOf(current);
-        int newIndex1 = index + current.value;
-        int newIndex = Math.floorMod(newIndex1, containers.size() - 1);
+        int newIndex = Math.floorMod(index + current.value, containers.size() - 1);
         containers.remove(index);
         containers.add(newIndex, current);
     }
 
     static class Container
     {
-        final int value;
+        final long value;
 
-        public Container(int value) {
+        public Container(long value) {
             this.value = value;
         }
 
