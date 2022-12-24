@@ -192,6 +192,14 @@ public class CharMatrix {
             CharMatrix.this.set(x, y, c);
         }
 
+        public Position wrap()
+        {
+            return new Position(
+                    Math.floorMod(x, getWidth()),
+                    Math.floorMod(y, getHeight())
+            );
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
